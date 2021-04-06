@@ -1,0 +1,67 @@
+---
+# tasks file for master-node
+
+- name: Configuring Yum repo for K8s
+  yum_repository:
+        name: k8s_repo
+        description: Yum for kubectl kubeadm
+        file: k8srepo
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        enabled: yes
+
+- name: Installing Docker, Kubeadm, Kubectl, Kubelet & iproute-tc
+  package:
+     name:
+        - docker
+        - kubeadm
+        - kubectl
+        - kubelet
+        - iproute-tc
+
+- name: Docker cgroup drive changed to systemd
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+            {
+             "exec-opts": ["native.cgroupdriver=systemd"]
+            }
+
+- name: Restart docker service
+  service:
+      name: docker
+      state: restarted
+      enabled: yes
+
+- name: Restarting kubelet
+  service:
+     name: kubelet
+     state: restarted
+     enabled: yes
+
+- name: Pulling Image
+  shell: kubeadm config images pull
+
+- name: ip-table bridge
+  shell: echo "1" >  /proc/sys/net/bridge/bridge-nf-call-iptables
+
+- name: Initializing kubeadm
+  shell: kubeadm init --pod-network-cidr=10.240.0.0/16 --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem
+  ignore_errors: yes
+
+- name: creating directory for master as user
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: '0755'
+
+- name: copy config file
+  copy:
+    dest: $HOME/.kube/config
+    src: /etc/kubernetes/admin.conf
+    remote_src: yes
+
+- name: change owner of file
+  shell: chown $(id -u):$(id -g) $HOME/.kube/config
+

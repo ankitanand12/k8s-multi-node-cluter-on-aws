@@ -1,0 +1,10 @@
+plugin: aws_ec2
+aws_access_key: < ENTER YOUR ACCESS KEY HERE >
+aws_secret_key: < ENTER YOUR SECRET KEY HERE >
+
+regions:
+  - ap-south-1
+
+keyed_groups:
+  - key: tags
+    prefix: tag

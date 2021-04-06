@@ -1,0 +1,38 @@
+# RUNNING ROLES FOR MASTER NODE AND SLAVE NODE
+
+- hosts: tag_name_master
+  roles:
+     - role: master-node
+
+- hosts: tag_name_slave
+  roles:
+     - role: slave-node
+
+
+# CREATING TOKEN AND JOINING SLAVE TO MASTER USING SHARED VARIABLES
+
+- hosts: tag_name_master
+  tasks:
+  - name: Creating Join Token
+    shell: "kubeadm token  create --print-join-command"
+    register: join_token
+
+  - set_fact:
+      shared_variable: "{{ join_token.stdout }}"
+
+  - add_host:
+      name: "join"
+      shared_variable: "{{ shared_variable }}"
+
+- hosts: tag_name_slave
+  vars:
+    join_slave: "{{ hostvars['join']['shared_variable'] }}"
+  tasks:
+  - name: Joining slave to master node
+    shell: "{{ join_slave }}"
+
+
+- hosts: tag_name_master
+  tasks:
+     - name: Apply flannel
+       shell: kubectl apply  -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
