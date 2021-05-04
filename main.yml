@@ -35,4 +35,43 @@
 - hosts: tag_name_master
   tasks:
      - name: Apply flannel
-       shell: kubectl apply  -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+       shell: kubectl apply  -f /root/flannel.yml
+
+       #Copy & Launching WordPress and MySql Data Base
+
+- hosts: tag_name_master
+  vars:
+  - wp: wordpress
+  - db: mysqldb
+  - expose_port: 80
+  - svc_type: NodePort
+  tasks:
+  - name: Copying Wordpress file
+    template:
+       src: wp.yml.j2
+       dest: /root/wp.yml
+
+  - name: Copying Mysql file
+    template:
+       src: mysql.yml.j2
+       dest: /root/mysql.yml
+
+  - name: Deploying Mysql DataBase
+    shell: kubectl apply -f /root/mysql.yml
+
+  - name: Deploying WordPress
+    shell: kubectl apply -f /root/wp.yml
+
+  - name: Exposing WordPress App
+    shell: "kubectl expose pod {{ wp }} --type={{ svc_type }} --port={{ expose_port }}"
+
+  - name: kubectl get svc
+    shell: kubectl get svc
+    register: serviceip
+
+  - name : Print service 
+    debug:
+        var: serviceip.stdout_lines
+
+
+

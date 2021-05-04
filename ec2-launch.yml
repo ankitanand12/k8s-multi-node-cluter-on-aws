@@ -1,7 +1,7 @@
 - hosts: localhost
   gather_facts: no
   vars_files:
-          - /root/arth_workspace/ec2-key.yml
+          - /root/arth_workspace/ansible/role/k8s-multi-node-cluter-on-aws/ec2-key.yml
   tasks:
       - pip:
           name: boto3

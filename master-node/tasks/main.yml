@@ -47,7 +47,7 @@
   shell: echo "1" >  /proc/sys/net/bridge/bridge-nf-call-iptables
 
 - name: Initializing kubeadm
-  shell: kubeadm init --pod-network-cidr=10.240.0.0/16 --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem
+  shell: "kubeadm init --pod-network-cidr={{ cidr }} --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem"
   ignore_errors: yes
 
 - name: creating directory for master as user
@@ -65,3 +65,7 @@
 - name: change owner of file
   shell: chown $(id -u):$(id -g) $HOME/.kube/config
 
+- name: Copy Flannel file
+  template:
+    dest: /root
+    src: flannel.yml
